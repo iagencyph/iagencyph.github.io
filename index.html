@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iAgency — We Elevate Brands With Precision</title>
+  <meta name="description" content="A full-service marketing agency built on strategy, creativity, and an influencer network that delivers results." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050709;
+      --fg: #e8edf5;
+      --card: #0e1118;
+      --muted: #5a6478;
+      --border: #1a2030;
+      --primary: #E8192C;
+      --primary-fg: #fff;
+      --font-syne: 'Syne', sans-serif;
+      --font-space: 'Space Grotesk', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-space);
+      overflow-x: hidden;
+    }
+
+    /* ─── 3D CANVAS ─── */
+    #canvas-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      transition: background 0.5s, border-color 0.5s;
+    }
+    nav.scrolled {
+      background: rgba(5,7,9,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 80px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo img { height: 40px; width: 40px; object-fit: contain; }
+    .nav-logo span {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .nav-logo span em { color: var(--primary); font-style: normal; }
+    .nav-links { display: flex; align-items: center; gap: 40px; list-style: none; }
+    .nav-links a {
+      font-family: var(--font-space);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--primary); }
+    .nav-cta {
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 10px 24px;
+      text-decoration: none;
+      transition: filter 0.2s;
+    }
+    .nav-cta:hover { filter: brightness(1.15); }
+    .nav-hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--fg);
+    }
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-syne);
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--fg);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .mobile-menu a:hover { color: var(--primary); }
+    .mobile-close {
+      position: absolute;
+      top: 24px; right: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--fg);
+      font-size: 2rem;
+    }
+
+    /* ─── SECTIONS COMMON ─── */
+    .section-wrapper {
+      position: relative;
+      z-index: 10;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .eyebrow {
+      font-family: var(--font-space);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: clamp(2rem, 5vw, 4rem);
+      text-transform: uppercase;
+      line-height: 1.05;
+      margin-bottom: 64px;
+    }
+    .section-title .accent { color: var(--primary); }
+
+    /* ─── PARALLAX BG IMAGE ─── */
+    .parallax-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .parallax-bg img {
+      width: 100%;
+      height: 130%;
+      object-fit: cover;
+      will-change: transform;
+    }
+    .parallax-bg .overlay {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ─── HERO ─── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      overflow: hidden;
+      z-index: 10;
+    }
+    #hero .parallax-bg img { opacity: 0.3; }
+    #hero .parallax-bg .overlay {
+      background: linear-gradient(to bottom, var(--bg) 0%, rgba(5,7,9,0.6) 50%, var(--bg) 100%);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-tag {
+      font-family: var(--font-space);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.3s forwards;
+    }
+    .hero-title {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5.5vw, 5.5rem);
+      line-height: 1.0;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      opacity: 0;
+      animation: fadeUp 1s 0.5s forwards;
+    }
+    .hero-title .accent { color: var(--primary); }
+    .hero-sub {
+      font-family: var(--font-space);
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 32px auto 0;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeIn 0.8s 1s forwards;
+    }
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 40px;
+      opacity: 0;
+      animation: fadeUp 0.8s 1.3s forwards;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 16px 32px;
+      text-decoration: none;
+      transition: filter 0.2s;
+    }
+    .btn-primary:hover { filter: brightness(1.15); }
+    .btn-outline {
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 16px 32px;
+      text-decoration: none;
+      transition: border-color 0.3s, color 0.3s;
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 64px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeIn 0.8s 1.6s forwards;
+    }
+    .hero-stats .stat-val {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: 1.75rem;
+      color: var(--primary);
+    }
+    .hero-stats .stat-label {
+      font-family: var(--font-space);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ─── ABOUT ─── */
+    #about {
+      padding: 128px 24px;
+      position: relative;
+      z-index: 10;
+    }
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+    .value-card {
+      border: 1px solid var(--border);
+      padding: 32px;
+      background: rgba(14,17,24,0.3);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.5s, transform 0.1s;
+      cursor: default;
+    }
+    .value-card:hover { border-color: rgba(232,25,44,0.4); }
+    .value-num {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: 2rem;
+      color: rgba(232,25,44,0.2);
+      transition: color 0.5s;
+    }
+    .value-card:hover .value-num { color: rgba(232,25,44,0.5); }
+    .value-title {
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      margin: 16px 0 12px;
+    }
+    .value-desc {
+      font-family: var(--font-space);
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ─── SERVICES ─── */
+    #services {
+      padding: 128px 24px;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+    #services .parallax-bg img { opacity: 0.15; }
+    #services .parallax-bg .overlay {
+      background: linear-gradient(to bottom, rgba(5,7,9,0.8) 0%, transparent 50%, rgba(5,7,9,0.8) 100%);
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .service-card {
+      border: 1px solid var(--border);
+      padding: 32px;
+      background: rgba(14,17,24,0.5);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.5s;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(232,25,44,0.05), transparent);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .service-card:hover { border-color: rgba(232,25,44,0.4); }
+    .service-card:hover::before { opacity: 1; }
+    .service-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+    .service-title {
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .service-desc {
+      font-family: var(--font-space);
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ─── PORTFOLIO ─── */
+    #work {
+      padding: 128px 24px;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+    #work .parallax-bg img { opacity: 0.1; }
+    #work .parallax-bg .overlay {
+      background: linear-gradient(to bottom, rgba(5,7,9,0.7) 0%, transparent 50%, rgba(5,7,9,0.7) 100%);
+    }
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .portfolio-card {
+      border: 1px solid var(--border);
+      padding: 24px;
+      background: rgba(14,17,24,0.3);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.5s, background 0.5s;
+      cursor: pointer;
+    }
+    .portfolio-card:hover { border-color: rgba(232,25,44,0.4); background: rgba(14,17,24,0.6); }
+    .portfolio-cat {
+      font-family: var(--font-space);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: rgba(232,25,44,0.7);
+    }
+    .portfolio-brand {
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 1rem;
+      text-transform: uppercase;
+      margin: 8px 0 4px;
+      transition: color 0.3s;
+    }
+    .portfolio-card:hover .portfolio-brand { color: var(--primary); }
+    .portfolio-tag {
+      font-family: var(--font-space);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .portfolio-arrow {
+      color: var(--primary);
+      font-size: 1.2rem;
+      margin-top: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .portfolio-card:hover .portfolio-arrow { opacity: 1; }
+
+    /* ─── CONTACT ─── */
+    #contact {
+      padding: 128px 24px;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+    #contact .parallax-bg img { opacity: 0.1; }
+    #contact .parallax-bg .overlay {
+      background: linear-gradient(to top, var(--bg) 0%, rgba(5,7,9,0.9) 50%, rgba(5,7,9,0.7) 100%);
+    }
+    .terminal {
+      max-width: 640px;
+      margin-bottom: 64px;
+      border: 1px solid var(--border);
+      background: rgba(14,17,24,0.5);
+      backdrop-filter: blur(8px);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .terminal-prompt {
+      color: var(--primary);
+      font-family: var(--font-space);
+      font-size: 0.875rem;
+      padding: 0 16px;
+      user-select: none;
+    }
+    .terminal input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-space);
+      font-size: 0.875rem;
+      color: var(--fg);
+      padding: 16px 0;
+    }
+    .terminal input::placeholder { color: var(--muted); }
+    .terminal a {
+      background: var(--primary);
+      color: #fff;
+      font-family: var(--font-syne);
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 16px 24px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: filter 0.2s;
+    }
+    .terminal a:hover { filter: brightness(1.15); }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 32px;
+    }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      background: rgba(14,17,24,0.3);
+      text-decoration: none;
+      transition: border-color 0.5s;
+    }
+    .contact-item:hover { border-color: rgba(232,25,44,0.4); }
+    .contact-item svg { width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
+    .contact-item-label {
+      font-family: var(--font-space);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+    }
+    .contact-item-value {
+      font-family: var(--font-space);
+      font-size: 0.875rem;
+      color: var(--fg);
+      transition: color 0.3s;
+      margin-top: 4px;
+    }
+    .contact-item:hover .contact-item-value { color: var(--primary); }
+    .footer {
+      margin-top: 96px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    @media (min-width: 640px) { .footer { flex-direction: row; } }
+    .footer-logo {
+      font-family: var(--font-syne);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--fg);
+    }
+    .footer-logo em { color: var(--primary); font-style: normal; }
+    .footer-copy {
+      font-family: var(--font-space);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ─── 3D TILT EFFECT ─── */
+    .tilt-wrap {
+      perspective: 600px;
+    }
+    .tilt-inner {
+      transition: transform 0.15s ease;
+      transform-style: preserve-3d;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta { display: none; }
+      .nav-hamburger { display: block; }
+      .nav-inner { padding: 0 20px; }
+      .hero-stats { gap: 24px; }
+      #about, #services, #work, #contact { padding: 80px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 3D Background Canvas -->
+<canvas id="canvas-bg"></canvas>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" onclick="toggleMenu()" aria-label="Close">✕</button>
+  <a href="#about" onclick="toggleMenu()">About</a>
+  <a href="#services" onclick="toggleMenu()">Services</a>
+  <a href="#work" onclick="toggleMenu()">Work</a>
+  <a href="#contact" onclick="toggleMenu()">Contact</a>
+</div>
+
+<!-- Navigation -->
+<nav id="mainNav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <img src="https://media.base44.com/images/public/6a10819eb5ffe2067ff2f64f/9a82f142d_e95f0c9b-fe69-40cb-9a7a-dece62d0625c.png" alt="iAgency Logo" />
+      <span>iAGENCY<em>.</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta">Start Project</a>
+    <button class="nav-hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="parallax-bg" data-parallax-speed="0.4">
+    <img id="heroImg" src="https://media.base44.com/images/public/6a10819eb5ffe2067ff2f64f/da3a80fee_generated_1e675f64.png" alt="" />
+    <div class="overlay"></div>
+  </div>
+  <div class="hero-content">
+    <p class="hero-tag">Marketing Agency · Est. 2023</p>
+    <h1 class="hero-title">
+      We Elevate<br />
+      Brands With<br />
+      <span class="accent">Precision</span>
+    </h1>
+    <p class="hero-sub">A full-service marketing agency built on strategy, creativity, and an influencer network that delivers results.</p>
+    <div class="hero-ctas">
+      <a href="#contact" class="btn-primary">Work With Us</a>
+      <a href="#work" class="btn-outline">See Our Work</a>
+    </div>
+    <div class="hero-stats">
+      <div class="text-center">
+        <div class="stat-val">550+</div>
+        <div class="stat-label">Active Influencers</div>
+      </div>
+      <div class="text-center">
+        <div class="stat-val">15+</div>
+        <div class="stat-label">Brand Partners</div>
+      </div>
+      <div class="text-center">
+        <div class="stat-val">2023</div>
+        <div class="stat-label">Founded</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="section-wrapper">
+  <div class="container">
+    <p class="eyebrow reveal">About iAgency</p>
+    <h2 class="section-title reveal reveal-delay-1">
+      Where Strategy<br />
+      Meets <span class="accent">Impact</span>
+    </h2>
+    <p class="reveal reveal-delay-2" style="font-family:var(--font-space);color:var(--muted);font-size:1.1rem;max-width:720px;line-height:1.7;margin-bottom:80px;">
+      Founded by Ian Zaragoza and Aldeza Dela Torre, iAgencyPH was built with a singular belief — that marketing done right changes everything. We craft tailored solutions that don't just reach audiences, but move them. With a team of skilled professionals and one of the Philippines' largest active influencer networks, we bring brands to life across every channel that matters.
+    </p>
+    <div class="values-grid" id="valuesGrid"></div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" class="section-wrapper">
+  <div class="parallax-bg" data-parallax-speed="0.3">
+    <img src="https://media.base44.com/images/public/6a10819eb5ffe2067ff2f64f/0f8834ad4_generated_7d8e0f7f.png" alt="" />
+    <div class="overlay"></div>
+  </div>
+  <div class="container" style="position:relative;z-index:10;">
+    <p class="eyebrow reveal">What We Do</p>
+    <h2 class="section-title reveal reveal-delay-1">
+      Full-Spectrum<br />
+      <span class="accent">Marketing</span> Solutions
+    </h2>
+    <div class="services-grid" id="servicesGrid"></div>
+  </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section id="work" class="section-wrapper">
+  <div class="parallax-bg" data-parallax-speed="0.25">
+    <img src="https://media.base44.com/images/public/6a10819eb5ffe2067ff2f64f/bd169c473_generated_2fe34873.png" alt="" />
+    <div class="overlay"></div>
+  </div>
+  <div class="container" style="position:relative;z-index:10;">
+    <p class="eyebrow reveal">Selected Work</p>
+    <h2 class="section-title reveal reveal-delay-1">
+      Brands We've<br />
+      Helped <span class="accent">Grow</span>
+    </h2>
+    <div class="portfolio-grid" id="portfolioGrid"></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="section-wrapper">
+  <div class="parallax-bg" data-parallax-speed="0.2">
+    <img src="https://media.base44.com/images/public/6a10819eb5ffe2067ff2f64f/461e6274d_generated_3b1f101e.png" alt="" />
+    <div class="overlay"></div>
+  </div>
+  <div class="container" style="position:relative;z-index:10;">
+    <p class="eyebrow reveal">Get In Touch</p>
+    <h2 class="section-title reveal reveal-delay-1">
+      Ready To Take Your<br />
+      Brand <span class="accent">Further?</span>
+    </h2>
+    <div class="terminal reveal reveal-delay-2">
+      <span class="terminal-prompt">→</span>
+      <input id="terminalInput" placeholder="Tell us about your project..." />
+      <a id="terminalSend" href="#">Send</a>
+    </div>
+    <div class="contact-grid">
+      <a href="tel:09778208615" class="contact-item reveal">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+        <div>
+          <div class="contact-item-label">Phone</div>
+          <div class="contact-item-value">0977-820-8615</div>
+        </div>
+      </a>
+      <a href="mailto:iagencyph@gmail.com" class="contact-item reveal reveal-delay-1">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+        <div>
+          <div class="contact-item-label">Email</div>
+          <div class="contact-item-value">iagencyph@gmail.com</div>
+        </div>
+      </a>
+      <a href="https://facebook.com/iagencyph" target="_blank" rel="noopener noreferrer" class="contact-item reveal reveal-delay-2">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 011-1h3V3h-3a5 5 0 00-5 5v2H7z"/></svg>
+        <div>
+          <div class="contact-item-label">Facebook</div>
+          <div class="contact-item-value">iagencyph</div>
+        </div>
+      </a>
+    </div>
+    <div class="footer">
+      <div class="footer-logo">iAGENCY<em>.</em></div>
+      <div class="footer-copy">© 2023 iAgencyPH. All rights reserved.</div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const services = [
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>`, title: 'Influencer Marketing', desc: 'Access to 550+ curated influencers — nano to celebrity — matched precisely to your target market.' },
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>`, title: 'Social Media Management', desc: 'Strategic content creation, scheduling, and community management that keeps your audience engaged daily.' },
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>`, title: 'Meta Ads', desc: 'Data-driven Facebook and Instagram advertising campaigns optimized for conversions and scale.' },
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/></svg>`, title: 'Photo & Video', desc: "Professional content production that captures your brand's essence and converts on every platform." },
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253"/></svg>`, title: 'Digital Marketing', desc: 'End-to-end digital strategies spanning SEO, email, and paid media to grow your brand holistically.' },
+  { icon: `<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;color:var(--primary);margin-bottom:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>`, title: 'Event Coverage', desc: 'Photo and video documentation of your brand activations, launches, and live events.' },
+];
+
+const values = [
+  { num: '01', title: 'Quality First', desc: 'We deliver solutions that exceed expectations, not just meet them.' },
+  { num: '02', title: 'Transparency', desc: 'Clear communication and honest strategy at every stage.' },
+  { num: '03', title: 'Innovation', desc: 'Staying ahead of trends to keep your brand relevant.' },
+  { num: '04', title: 'ROI Focus', desc: 'Every campaign engineered to maximize your return.' },
+];
+
+const projects = [
+  { brand: 'E11ven by Ellen Adarna', tag: 'Celebrity Endorsement · Beauty', cat: 'Influencer Marketing' },
+  { brand: 'Perfume Dessert London', tag: 'Influencer Campaign · Fragrance', cat: 'Influencer Marketing' },
+  { brand: 'Asian Sky Mall', tag: 'Influencer Campaign · Retail', cat: 'Influencer Marketing' },
+  { brand: 'Sugar Dolls PH', tag: 'Product Launch · Fragrance', cat: 'Influencer Marketing' },
+  { brand: 'Amara Shia Jewelry', tag: 'Brand Content · Luxury', cat: 'Social Media · Photo & Video' },
+  { brand: 'Go Nutrients', tag: 'Product Promotion · Health', cat: 'Influencer Marketing' },
+  { brand: 'Maharlika Foods', tag: 'Product Promotion · Food', cat: 'Influencer Marketing' },
+  { brand: 'Mang Boks PH', tag: 'Influencer Campaign · Food', cat: 'Influencer Marketing' },
+  { brand: 'Prothin PH', tag: 'Product Promotion · Fitness', cat: 'Influencer Marketing' },
+  { brand: 'First Vita Plus', tag: 'Event Coverage · Anniversary', cat: 'Photo & Video' },
+  { brand: 'F2R Engine Treatment', tag: 'Product Promotion · Automotive', cat: 'Influencer Marketing' },
+  { brand: 'Dropify', tag: 'Brand Awareness · E-commerce', cat: 'Influencer Marketing' },
+  { brand: 'DMCI Homes', tag: 'Real Estate · Brand Awareness', cat: 'Influencer Marketing' },
+  { brand: 'SMDC Properties', tag: 'Social Media Marketing · Realty', cat: 'Social Media' },
+  { brand: 'Rana Pharmaceutical Inc.', tag: 'Brand Promotion · Pharma', cat: 'Influencer Marketing' },
+  { brand: 'Fizzi', tag: 'Brand Campaign · Beverage', cat: 'Influencer Marketing · Photo & Video' },
+  { brand: 'CHHAL Beauty', tag: 'Brand Campaign · Beauty & Skincare', cat: 'Influencer Marketing · Video' },
+  { brand: 'Primebeta', tag: 'Product Campaign · Health & Wellness', cat: 'Influencer Marketing · Photo & Video' },
+];
+
+// ─── BUILD DOM ────────────────────────────────────────────
+const valuesGrid = document.getElementById('valuesGrid');
+values.forEach((v, i) => {
+  valuesGrid.innerHTML += `
+    <div class="tilt-wrap"><div class="value-card tilt-inner reveal${i > 0 ? ' reveal-delay-' + Math.min(i, 4) : ''}">
+      <div class="value-num">${v.num}</div>
+      <div class="value-title">${v.title}</div>
+      <div class="value-desc">${v.desc}</div>
+    </div></div>`;
+});
+
+const servicesGrid = document.getElementById('servicesGrid');
+services.forEach((s, i) => {
+  servicesGrid.innerHTML += `
+    <div class="tilt-wrap"><div class="service-card tilt-inner reveal${i > 0 ? ' reveal-delay-' + Math.min(i, 4) : ''}">
+      ${s.icon}
+      <div class="service-title">${s.title}</div>
+      <div class="service-desc">${s.desc}</div>
+    </div></div>`;
+});
+
+const portfolioGrid = document.getElementById('portfolioGrid');
+projects.forEach((p, i) => {
+  portfolioGrid.innerHTML += `
+    <div class="tilt-wrap"><div class="portfolio-card tilt-inner reveal${i > 0 ? ' reveal-delay-' + Math.min(i % 4, 4) : ''}">
+      <div class="portfolio-cat">${p.cat}</div>
+      <div class="portfolio-brand">${p.brand}</div>
+      <div class="portfolio-tag">${p.tag}</div>
+      <div class="portfolio-arrow">→</div>
+    </div></div>`;
+});
+
+// ─── NAV SCROLL ───────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// ─── MOBILE MENU ─────────────────────────────────────────
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+// ─── TERMINAL SEND ───────────────────────────────────────
+document.getElementById('terminalSend').addEventListener('click', (e) => {
+  e.preventDefault();
+  const val = document.getElementById('terminalInput').value;
+  window.location.href = `mailto:iagencyph@gmail.com?subject=New Project Inquiry&body=${encodeURIComponent(val)}`;
+});
+
+// ─── SCROLL REVEAL ───────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ─── PARALLAX IMAGES ─────────────────────────────────────
+function updateParallax() {
+  const scrollY = window.scrollY;
+  document.querySelectorAll('.parallax-bg').forEach(bg => {
+    const img = bg.querySelector('img');
+    if (!img) return;
+    const speed = parseFloat(bg.dataset.parallaxSpeed || 0.3);
+    const rect = bg.parentElement.getBoundingClientRect();
+    const centerOffset = (rect.top + rect.height / 2) - window.innerHeight / 2;
+    const offset = centerOffset * speed;
+    img.style.transform = `translateY(${offset}px) scale(1.2)`;
+  });
+
+  // Hero title parallax
+  const heroContent = document.querySelector('.hero-content');
+  if (heroContent) {
+    heroContent.style.transform = `translateY(${scrollY * 0.3}px)`;
+    heroContent.style.opacity = Math.max(0, 1 - scrollY / (window.innerHeight * 0.7));
+  }
+}
+window.addEventListener('scroll', updateParallax, { passive: true });
+updateParallax();
+
+// ─── 3D TILT ─────────────────────────────────────────────
+document.addEventListener('mousemove', (e) => {
+  document.querySelectorAll('.tilt-wrap').forEach(wrap => {
+    const rect = wrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    const inside = Math.abs(dx) < 1.5 && Math.abs(dy) < 1.5;
+    const inner = wrap.querySelector('.tilt-inner');
+    if (inner) {
+      inner.style.transform = inside
+        ? `perspective(600px) rotateY(${dx * 7}deg) rotateX(${-dy * 7}deg) translateZ(8px)`
+        : `perspective(600px) rotateY(0deg) rotateX(0deg) translateZ(0px)`;
+    }
+  });
+});
+
+// ─── THREE.JS 3D BACKGROUND ─────────────────────────────
+(function() {
+  const canvas = document.getElementById('canvas-bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 30;
+
+  // Particles
+  const count = 800;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const red = new THREE.Color('#E8192C'), white = new THREE.Color('#F1F5F9');
+  for (let i = 0; i < count; i++) {
+    pos[i*3]   = (Math.random()-0.5)*80;
+    pos[i*3+1] = (Math.random()-0.5)*80;
+    pos[i*3+2] = (Math.random()-0.5)*80;
+    const c = Math.random() > 0.85 ? red : white;
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = new THREE.PointsMaterial({ size: 0.08, vertexColors: true, transparent: true, opacity: 0.6 });
+  scene.add(new THREE.Points(geo, mat));
+
+  // Floating wireframes
+  const meshes = [];
+  const mats = new THREE.MeshStandardMaterial({ color:'#E8192C', metalness:0.9, roughness:0.1, transparent:true, opacity:0.15, wireframe:true });
+  [new THREE.IcosahedronGeometry(3,1), new THREE.OctahedronGeometry(2.5,0), new THREE.TorusGeometry(2,0.5,8,32), new THREE.TetrahedronGeometry(2,0)].forEach((g, i) => {
+    const m = new THREE.Mesh(g, mats.clone());
+    m.position.set((i-1.5)*15, (Math.random()-0.5)*10, -10+Math.random()*-20);
+    m.userData = { spd: 0.002+Math.random()*0.003, off: i*1.5 };
+    scene.add(m);
+    meshes.push(m);
+  });
+
+  scene.add(new THREE.AmbientLight('#2D333F', 0.5));
+  const p1 = new THREE.PointLight('#E8192C', 1.5, 100);
+  p1.position.set(10,10,10); scene.add(p1);
+  const p2 = new THREE.PointLight('#F1F5F9', 0.8, 100);
+  p2.position.set(-10,-10,5); scene.add(p2);
+
+  let scrollY = 0, mx = 0, my = 0;
+  window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+  window.addEventListener('mousemove', e => {
+    mx = (e.clientX/window.innerWidth-0.5)*2;
+    my = (e.clientY/window.innerHeight-0.5)*2;
+  });
+
+  const pts = scene.children.find(c => c instanceof THREE.Points);
+  (function loop() {
+    requestAnimationFrame(loop);
+    const t = Date.now()*0.001;
+    if (pts) {
+      pts.rotation.y = t*0.02 + scrollY*0.0001;
+      pts.rotation.x = scrollY*0.00005;
+    }
+    camera.position.x += (mx*2 - camera.position.x)*0.02;
+    camera.position.y += (-my*2 - camera.position.y)*0.02;
+    camera.lookAt(0,0,0);
+    meshes.forEach(m => {
+      m.rotation.x = t*m.userData.spd + m.userData.off;
+      m.rotation.y = t*m.userData.spd*1.3;
+      m.position.y += Math.sin(t + m.userData.off)*0.003;
+    });
+    renderer.render(scene, camera);
+  })();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>
